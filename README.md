@@ -4,7 +4,7 @@ This is an AI-powered Resume Chatbot that allows users to upload their resume an
 
 ## Dashboard (Streamlit App)
 #### Link: https://airesume-analyzer.streamlit.app/
-![alt text](<Screenshot 2025-03-10 at 9.04.46 PM.png>)
+![alt text](<images/Screenshot 2025-03-11 at 12.22.47 AM.png>)
 
 
 ## Features
