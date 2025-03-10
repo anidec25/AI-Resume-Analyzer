@@ -6,6 +6,8 @@ from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import PyPDF2
 import docx
+import base64
+import gc
 
 # Set page title
 st.set_page_config(page_title="AI Resume Assistant", page_icon="📄")
@@ -13,20 +15,29 @@ st.set_page_config(page_title="AI Resume Assistant", page_icon="📄")
 # Title of the app
 st.title("📄 AI Resume Assistant")
 
-# Sidebar for API key and resume upload
-st.sidebar.title("📄 Upload Your Resume")
-api_key = st.sidebar.text_input("Enter your OpenAI API Key:", type="password")  # New input for API key
-uploaded_file = st.sidebar.file_uploader("Upload your resume:", type=["pdf", "docx", "txt"], help="Supported formats: PDF, DOCX, TXT")
 
 resume_text = ""
 faiss_index = None
 
-# Check if the API key is loaded correctly
-if api_key:
-    chat_model = ChatOpenAI(openai_api_key=api_key)
-    embeddings = OpenAIEmbeddings(openai_api_key=api_key)  # Initialize embeddings here
-else:
-    st.error("API key not found. Please enter your API key in the sidebar.")
+
+def display_pdf(file_bytes: bytes, file_name: str):
+    """Displays the uploaded PDF in an iframe."""
+    base64_pdf = base64.b64encode(file_bytes).decode("utf-8")
+    pdf_display = f"""
+    <iframe 
+        src="data:application/pdf;base64,{base64_pdf}" 
+        width="100%" 
+        height="300px" 
+        type="application/pdf"
+    >
+    </iframe>
+    """
+    st.markdown(f"### Preview of {file_name}")
+    st.markdown(pdf_display, unsafe_allow_html=True)
+
+def reset_chat():
+    st.session_state.messages = []
+    gc.collect()
 
 # Function to extract text from resume
 def extract_text_from_resume(file):
@@ -51,12 +62,35 @@ def create_faiss_index(text):
     vector_store = FAISS.from_texts(chunks, embeddings)  # Use embeddings here
     return vector_store
 
-# Load resume text and create FAISS index
-if uploaded_file:
-    resume_text = extract_text_from_resume(uploaded_file)
-    faiss_index = create_faiss_index(resume_text)
-    faiss_index.save_local("faiss_index")
-    st.sidebar.success("✅ Resume uploaded and processed successfully!")
+with st.sidebar:
+
+    # Sidebar for API key and resume upload
+    st.sidebar.title("📄 Upload Your Resume")
+    api_key = st.sidebar.text_input("Enter your OpenAI API Key:", type="password")  # New input for API key
+    uploaded_file = st.sidebar.file_uploader("Upload your resume:", type=["pdf", "docx", "txt"], help="Supported formats: PDF, DOCX, TXT")
+
+    # Check if the API key is loaded correctly
+    if api_key:
+        chat_model = ChatOpenAI(openai_api_key=api_key)
+        embeddings = OpenAIEmbeddings(openai_api_key=api_key)  # Initialize embeddings here
+    else:
+        st.error("API key not found. Please enter your API key in the sidebar.")
+
+
+    # Load resume text and create FAISS index
+    if uploaded_file:
+        resume_text = extract_text_from_resume(uploaded_file)
+        faiss_index = create_faiss_index(resume_text)
+        faiss_index.save_local("faiss_index")
+        st.sidebar.success("✅ Resume uploaded and processed successfully!")
+
+        # Optionally display the PDF in the sidebar
+        display_pdf(uploaded_file.getvalue(), uploaded_file.name)
+
+    
+    st.button("Clear Chat", on_click=reset_chat)
+
+
 
 # Initialize chat history
 if "messages" not in st.session_state:
@@ -86,12 +120,8 @@ with tab1:
 
     user_input = st.text_input("🔍 Ask something about your resume:", key="user_input", help="Example: 'What skills should I improve?' or 'What job roles fit my experience?'", on_change=process_input)
 
-    col1, col2 = st.columns([2, 1])
-    with col2:
-        if st.button("🗑️ Clear Chat"):
-            st.session_state.messages = []
-    with col1:
-        generate_response = st.button("💡 Generate Response")
+
+generate_response = st.button("💡 Generate Response")
 
 if generate_response:
     if user_input and faiss_index:
