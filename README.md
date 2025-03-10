@@ -3,7 +3,7 @@
 This is an AI-powered Resume Chatbot that allows users to upload their resume and ask career-related questions. The system leverages **Retrieval-Augmented Generation (RAG)** to provide more accurate responses based on the uploaded resume.
 
 ## Dashboard (Streamlit App)
-#### Link: https://spotify-skip-prediction.streamlit.app/
+#### Link: https://airesume-analyzer.streamlit.app/
 ![alt text](<Screenshot 2025-03-10 at 9.04.46 PM.png>)
 
 
