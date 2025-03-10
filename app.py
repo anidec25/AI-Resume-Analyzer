@@ -6,10 +6,18 @@ from langchain.vectorstores import FAISS
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 import PyPDF2
 import docx
+
+# Set page title
+st.set_page_config(page_title="AI Resume Assistant", page_icon="📄")
+
+# Title of the app
+st.title("📄 AI Resume Assistant")
+
 # Sidebar for API key and resume upload
 st.sidebar.title("📄 Upload Your Resume")
 api_key = st.sidebar.text_input("Enter your OpenAI API Key:", type="password")  # New input for API key
 uploaded_file = st.sidebar.file_uploader("Upload your resume:", type=["pdf", "docx", "txt"], help="Supported formats: PDF, DOCX, TXT")
+
 resume_text = ""
 faiss_index = None
 
