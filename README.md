@@ -2,6 +2,10 @@
 
 This is an AI-powered Resume Chatbot that allows users to upload their resume and ask career-related questions. The system leverages **Retrieval-Augmented Generation (RAG)** to provide more accurate responses based on the uploaded resume.
 
+## UI
+![image](image.png)
+
+
 ## Features
 - 📄 **Upload Resume** (Supports PDF, DOCX, and TXT)
 - 🔍 **Ask Questions** about your resume (e.g., "What skills should I improve?")
