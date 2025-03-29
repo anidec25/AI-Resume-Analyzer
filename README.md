@@ -26,15 +26,18 @@ This approach ensures that responses are grounded in the actual content of your 
   - Creates searchable vector embeddings for intelligent retrieval
 
 - 🔍 **Interactive AI Chat**
-  - Ask specific questions about your resume (e.g., "What skills should I highlight?")
-  - Get tailored feedback on your experience and qualifications
-  - Receive suggestions for improving specific sections
+  - Ask specific questions about your resume (e.g., "What skills should I highlight?", "Which companies have I worked for?")
+  - Get accurate information about your work history and experience
+  - Receive tailored feedback on your experience and qualifications
+  - Smart company extraction to identify all previous employers
+  - Maintains context for follow-up questions
 
 - 📊 **Comprehensive Resume Analysis**
   - Strengths assessment
   - Areas for improvement identification
   - Missing key elements detection
   - Formatting and structure recommendations
+  - Modern KPI-based scoring system
 
 - 🚀 **Personalized Career Guidance**
   - Career path recommendations based on your skills and experience
@@ -116,13 +119,17 @@ streamlit run app.py
 
 3. **Ask Questions and Get Insights**:
    - Use the "Chat" tab to ask specific questions about your resume
-   - Type your question in the input field and press Enter or click "Generate Response"
+   - Ask about work history (e.g., "Which companies have I worked for?")
+   - Type your question in the input field and press Enter
    - View AI-generated responses based on your resume content
+   - Follow up with related questions for more details
 
 4. **Get a Comprehensive Resume Analysis**:
    - Navigate to the "Analysis" tab
    - Click the "Analyze Resume" button
-   - Review the detailed analysis covering strengths, areas for improvement, and suggestions
+   - Review the detailed analysis with modern KPI cards
+   - Check company-specific insights and experience details
+   - See recommendations for improvements
 
 5. **Receive Career Guidance**:
    - Go to the "Career Guidance" tab
