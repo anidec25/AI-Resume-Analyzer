@@ -16,6 +16,7 @@ This approach ensures that responses are grounded in the actual content of your 
 ## Dashboard (Streamlit App)
 #### Link: https://airesume-analyzer.streamlit.app/
 ![alt text](<images/dashboard.png>)
+![alt text](<images/Analysistab.png>)
 
 
 ## Features
