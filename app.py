@@ -35,6 +35,7 @@ def reset_chat():
 def main():
     st.set_page_config(page_title="Nemo", page_icon="🐠")
     st.title("🐠 Nemo, Welcomes you!")
+    st.subheader("Finding your best resume")
 
     # Initialize these variables with None
     chat_model = None
