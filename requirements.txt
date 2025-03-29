@@ -7,3 +7,4 @@ python-docx
 langchain-community
 faiss-cpu
 scikit-learn
+bs4
