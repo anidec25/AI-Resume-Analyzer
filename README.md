@@ -250,3 +250,35 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - Streamlit for the excellent web app framework
 - The open-source community for various libraries used in this project
 
+## Resume Length Guidelines
+
+The application checks if your resume has a reasonable length:
+- **Minimum**: 300 words (ensures enough detail)
+- **Maximum**: 1000 words (keeps content concise)
+- **Why?**: 
+  - Too short (<300 words): May lack important details and experience
+  - Too long (>1000 words): May lose reader's attention and be too verbose
+  - This range is considered optimal for ATS systems and human readers
+
+## ATS Compatibility Scoring
+
+The application uses a sophisticated ATS (Applicant Tracking System) compatibility scoring system that evaluates:
+
+### Core Elements (Higher Weighted)
+- **Contact Information** (Email, Phone, LinkedIn, etc.)
+- **Professional Experience** (Work history, achievements)
+- **Skills and Expertise** (Technical skills, competencies)
+- **Education and Certifications**
+
+### Format and Structure
+- **Section Organization** (Summary, Experience, Education)
+- **Document Length** (300-1000 words optimal)
+- **Keyword Optimization** (Natural keyword density)
+- **Technical Compatibility** (No images, ATS-friendly format)
+
+### Scoring Methodology
+- Weighted scoring system prioritizing critical elements
+- Keyword density analysis for optimal content distribution
+- Comprehensive section detection with multiple variations
+- Detailed feedback and improvement suggestions
+
