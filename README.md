@@ -204,3 +204,48 @@ This project is licensed under the MIT License - see the LICENSE file for detail
 - OpenAI for providing the API
 - Streamlit for the excellent web app framework
 - The open-source community for various libraries used in this project
+
+## Project Structure
+```bash
+AI-Resume-Analyzer/
+├── app.py                 # Main application file
+├── requirements.txt       # Project dependencies
+├── README.md             # Project documentation
+├── src/
+│   ├── __init__.py
+│   ├── components/       # UI components
+│   │   ├── __init__.py
+│   │   ├── analysis.py   # Resume analysis component
+│   │   ├── chat.py      # Chat interface component
+│   │   └── career_guidance.py  # Career guidance component
+│   ├── utils/           # Utility functions
+│   │   ├── __init__.py
+│   │   ├── file_handlers.py    # File processing utilities
+│   │   └── text_processors.py  # Text processing utilities
+│   ├── analyzers/       # Analysis modules
+│   │   ├── __init__.py
+│   │   ├── resume_analyzer.py  # Resume scoring and analysis
+│   │   └── job_analyzer.py     # Job description analysis
+│   └── config/          # Configuration files
+│       ├── __init__.py
+│       └── keywords.py  # Industry-specific keywords
+├── images/             # Images for documentation
+│   └── dashboard.png   # Dashboard screenshot
+└── tests/             # Test files
+    └── __init__.py
+```
+
+This structure:
+- Separates concerns into distinct modules
+- Makes the codebase more maintainable and scalable
+- Follows Python best practices for project organization
+- Makes it easy to find and modify specific functionality
+- Keeps related code together in logical components
+
+Each directory serves a specific purpose:
+- `src/components/`: Contains the main UI components for each tab
+- `src/utils/`: Houses utility functions for file and text processing
+- `src/analyzers/`: Contains the core analysis logic
+- `src/config/`: Stores configuration files and constants
+- `images/`: Stores images used in documentation
+- `tests/`: Contains test files (for future implementation)
