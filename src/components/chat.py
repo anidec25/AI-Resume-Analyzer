@@ -1,4 +1,5 @@
 import streamlit as st
+from src.utils.text_processors import get_latest_experience
 
 def render_chat_tab(faiss_index, chat_model, resume_text):
     """Render the chat tab interface."""
@@ -24,4 +25,10 @@ def render_chat_tab(faiss_index, chat_model, resume_text):
         key="user_input",
         help="Example: 'What skills should I improve?' or 'What job roles fit my experience?'",
         on_change=process_input
-    ) 
+    )
+
+def process_experience_query(query, resume_text):
+    """Process experience-related queries with improved accuracy."""
+    if "latest" in query.lower() and "experience" in query.lower():
+        return get_latest_experience(resume_text)
+    # Add more experience-related query handlers as needed 

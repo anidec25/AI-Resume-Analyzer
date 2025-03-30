@@ -33,9 +33,9 @@ def reset_chat():
     gc.collect()
 
 def main():
-    st.set_page_config(page_title="Nemo", page_icon="🐠")
-    st.title("🐠 Nemo, Welcomes you!")
-    st.markdown("""##### Finding your best resume""")
+    st.set_page_config(page_title="CASE", page_icon="🤖")
+    st.title("🤖 CASE, Welcomes you!")
+    st.markdown("""##### Ready to Assist""")
 
     # Initialize these variables with None
     chat_model = None
