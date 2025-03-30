@@ -14,7 +14,7 @@ AI-Resume-Analyzer is an intelligent application designed to help job seekers im
 This approach ensures that responses are grounded in the actual content of your resume rather than generic advice.
 
 ## Dashboard (Streamlit App)
-#### Link: https://airesume-analyzer.streamlit.app/
+#### Link: https://case-analyzer.streamlit.app/
 ![alt text](<images/dashboard.png>)
 ![alt text](<images/Analysistab.png>)
 
