@@ -15,6 +15,7 @@ import numpy as np
 import requests
 from bs4 import BeautifulSoup
 import re
+from pyresparser import ResumeParser
 
 # First, move all these functions to the top of the file, right after the imports and before any Streamlit code
 def get_industry_keywords():
@@ -159,11 +160,20 @@ def analyze_sections(resume_text):
 
 def calculate_resume_score(resume_text):
     """Calculate overall resume score based on various parameters."""
+    word_count = len(resume_text.split())
+    target_word_count = 800  # This could be dynamic based on job role
+    content_length_score = min(100, (word_count / target_word_count) * 100)
+
+    # Example of adding section completeness
+    essential_sections = ['summary', 'experience', 'education', 'skills']
+    found_sections = [section for section in essential_sections if section.lower() in resume_text.lower()]
+    section_completeness_score = (len(found_sections) / len(essential_sections)) * 100
+
     scores = {
         'ats_compatibility': calculate_ats_score(resume_text)[0],
         'keyword_optimization': analyze_keywords(resume_text)[0],
-        'content_length': min(100, (len(resume_text.split()) / 800) * 100),
-        'section_completeness': analyze_sections(resume_text)
+        'content_length': content_length_score,
+        'section_completeness': section_completeness_score
     }
     
     total_score = sum(scores.values()) / len(scores)
@@ -265,18 +275,38 @@ def reset_chat():
 
 # Function to extract text from resume
 def extract_text_from_resume(file):
-    """Extracts text from a resume file."""
+    """Extracts text from a resume file using PyPDF2 and docx."""
     if file.type == "application/pdf":
-        reader = PyPDF2.PdfReader(file)
-        text = "".join(page.extract_text() or "" for page in reader.pages)
+        # Save the uploaded file temporarily
+        with open("temp_resume.pdf", "wb") as temp_file:
+            temp_file.write(file.getbuffer())
+        
+        # Use PyPDF2 to extract text
+        with open("temp_resume.pdf", "rb") as temp_file:
+            reader = PyPDF2.PdfReader(temp_file)
+            resume_text = ""
+            for page in reader.pages:
+                resume_text += page.extract_text() + "\n"
+        
+        # Clean up the temporary file
+        os.remove("temp_resume.pdf")
+        return resume_text.strip()  # Return the extracted text
+
     elif file.type == "application/vnd.openxmlformats-officedocument.wordprocessingml.document":
-        doc = docx.Document(file)
-        text = "\n".join([para.text for para in doc.paragraphs])
-    elif file.type == "text/plain":
-        text = file.read().decode("utf-8")
+        # Save the uploaded DOCX file temporarily
+        with open("temp_resume.docx", "wb") as temp_file:
+            temp_file.write(file.getbuffer())
+        
+        # Use docx to extract text
+        doc = docx.Document("temp_resume.docx")
+        resume_text = "\n".join([para.text for para in doc.paragraphs])
+        
+        # Clean up the temporary file
+        os.remove("temp_resume.docx")
+        return resume_text.strip()  # Return the extracted text
+
     else:
         return "Unsupported file type."
-    return text
 
 # Function to create FAISS index
 def create_faiss_index(text):
@@ -349,185 +379,166 @@ with tab2:
     st.subheader("📊 Resume Analysis Dashboard")
     
     if uploaded_file and resume_text:
-        # Create two expandable sections
-        with st.expander("Resume Scores", expanded=False):
+        # Create the expandable section for Resume Scores
+        with st.expander("Resume Scores", expanded=True):
             # Create three columns for the main metrics
             metric_col1, metric_col2, metric_col3 = st.columns(3)
-            
-            if st.button("🔍 Analyze Resume", type="primary", use_container_width=True):
-                with st.spinner("Analyzing your resume..."):
-                    # Calculate all scores
-                    total_score, score_breakdown = calculate_resume_score(resume_text)
-                    ats_score, ats_factors = calculate_ats_score(resume_text)
-                    keyword_score, keyword_analysis = analyze_keywords(resume_text)
+
+            with st.spinner("Analyzing your resume..."):
+                # Calculate all scores
+                total_score, score_breakdown = calculate_resume_score(resume_text)
+                ats_score, ats_factors = calculate_ats_score(resume_text)
+                keyword_score, keyword_analysis = analyze_keywords(resume_text)
+                
+                # Display main metrics
+                with metric_col1:
+                    st.metric(
+                        label="Overall Resume Score",
+                        value=f"{total_score:.1f}%",
+                        delta="Target: 85%+"
+                    )
+                
+                with metric_col2:
+                    st.metric(
+                        label="ATS Compatibility",
+                        value=f"{ats_score:.1f}%",
+                        delta="Target: 90%+"
+                    )
+                
+                with metric_col3:
+                    st.metric(
+                        label="Keyword Optimization",
+                        value=f"{keyword_score:.1f}%",
+                        delta="Target: 80%+"
+                    )
+                
+                # Create tabs for detailed analysis
+                analysis_tab1, analysis_tab2, analysis_tab3 = st.tabs([
+                    "📊 Score Analysis KPIs", 
+                    "🎯 ATS Analysis", 
+                    "🔑 Keyword Analysis"
+                ])
+                
+                # Score Breakdown Tab
+                with analysis_tab1:
+                    st.subheader("Score Analysis KPIs")
                     
-                    # Display main metrics
-                    with metric_col1:
-                        st.metric(
-                            label="Overall Resume Score",
-                            value=f"{total_score:.1f}%",
-                            delta="Target: 85%+"
-                        )
-                    
-                    with metric_col2:
-                        st.metric(
-                            label="ATS Compatibility",
-                            value=f"{ats_score:.1f}%",
-                            delta="Target: 90%+"
-                        )
-                    
-                    with metric_col3:
-                        st.metric(
-                            label="Keyword Optimization",
-                            value=f"{keyword_score:.1f}%",
-                            delta="Target: 80%+"
-                        )
-                    
-                    # Create tabs for detailed analysis
-                    analysis_tab1, analysis_tab2, analysis_tab3 = st.tabs([
-                        "📊 Score Analysis KPIs", 
-                        "🎯 ATS Analysis", 
-                        "🔑 Keyword Analysis"
-                    ])
-                    
-                    # Score Breakdown Tab
-                    with analysis_tab1:
-                        st.subheader("Score Analysis KPIs")
-                        
-                        # Create a modern KPI layout
-                        kpi_metrics = {
-                            'ATS Compatibility': {
-                                'score': score_breakdown['ats_compatibility'],
-                                'icon': '🎯',
-                                'target': 90,
-                                'description': 'Measures how well your resume works with ATS'
-                            },
-                            'Keyword Optimization': {
-                                'score': score_breakdown['keyword_optimization'],
-                                'icon': '🔍',
-                                'target': 80,
-                                'description': 'Analyzes presence of industry-relevant keywords'
-                            },
-                            'Content Length': {
-                                'score': score_breakdown['content_length'],
-                                'icon': '📝',
-                                'target': 85,
-                                'description': 'Evaluates if your resume has optimal length'
-                            },
-                            'Section Completeness': {
-                                'score': score_breakdown['section_completeness'],
-                                'icon': '📋',
-                                'target': 95,
-                                'description': 'Checks if all essential sections are present'
-                            }
+                    # Create a modern KPI layout
+                    kpi_metrics = {
+                        'ATS Compatibility': {
+                            'score': score_breakdown['ats_compatibility'],
+                            'icon': '🎯',
+                            'target': 90,
+                            'description': 'Measures how well your resume works with ATS'
+                        },
+                        'Keyword Optimization': {
+                            'score': score_breakdown['keyword_optimization'],
+                            'icon': '🔍',
+                            'target': 80,
+                            'description': 'Analyzes presence of industry-relevant keywords'
+                        },
+                        'Content Length': {
+                            'score': score_breakdown['content_length'],
+                            'icon': '📝',
+                            'target': 85,
+                            'description': 'Evaluates if your resume has optimal length'
+                        },
+                        'Section Completeness': {
+                            'score': score_breakdown['section_completeness'],
+                            'icon': '📋',
+                            'target': 95,
+                            'description': 'Checks if all essential sections are present'
                         }
+                    }
 
-                        # Create a 2x2 grid for KPIs
-                        col1, col2 = st.columns(2)
-                        col3, col4 = st.columns(2)
-                        cols = [col1, col2, col3, col4]
+                    # Create a 2x2 grid for KPIs
+                    col1, col2 = st.columns(2)
+                    col3, col4 = st.columns(2)
+                    cols = [col1, col2, col3, col4]
 
-                        for i, (metric, data) in enumerate(kpi_metrics.items()):
-                            with cols[i]:
-                                # Calculate percentage of target achieved
-                                target_percentage = min(100, (data['score'] / data['target']) * 100)
-                                
-                                # Determine status color
-                                if data['score'] >= data['target']:
-                                    color = "#28a745"  # green
-                                    status = "Excellent"
-                                elif data['score'] >= data['target'] * 0.8:
-                                    color = "#ffc107"  # orange
-                                    status = "Good"
-                                else:
-                                    color = "#dc3545"  # red
-                                    status = "Needs Improvement"
+                    for i, (metric, data) in enumerate(kpi_metrics.items()):
+                        with cols[i]:
+                            # Calculate percentage of target achieved
+                            target_percentage = min(100, (data['score'] / data['target']) * 100)
+                            
+                            # Determine status color
+                            if data['score'] >= data['target']:
+                                color = "#28a745"  # green
+                                status = "Excellent"
+                            elif data['score'] >= data['target'] * 0.8:
+                                color = "#ffc107"  # orange
+                                status = "Good"
+                            else:
+                                color = "#dc3545"  # red
+                                status = "Needs Improvement"
 
-                                # Create KPI card HTML
-                                kpi_html = (
-                                    '<div style="padding: 1rem; border-radius: 0.7rem; background: #f8f9fa; '
-                                    'box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">'
-                                    '<div style="display: flex; justify-content: space-between; align-items: center;">'
-                                    f'<span style="font-size: 1.8rem;">{data["icon"]}</span>'
-                                    f'<span style="color: {color}; font-weight: bold; font-size: 1.5rem;">'
-                                    f'{data["score"]:.1f}%</span></div>'
-                                    f'<h3 style="margin: 0.5rem 0; font-size: 1.1rem; color: #2c3e50;">{metric}</h3>'
-                                    '<div style="background: #e9ecef; border-radius: 0.5rem; height: 0.5rem; '
-                                    'margin: 0.5rem 0;">'
-                                    f'<div style="width: {target_percentage}%; height: 100%; background: {color}; '
-                                    'border-radius: 0.5rem;"></div></div>'
-                                    '<div style="display: flex; justify-content: space-between; '
-                                    'font-size: 0.8rem; color: #495057;">'
-                                    f'<span>Target: {data["target"]}%</span>'
-                                    f'<span style="color: {color};">{status}</span>'
-                                    '</div></div>'
-                                )
-                                
-                                st.markdown(kpi_html, unsafe_allow_html=True)
+                            # Create KPI card HTML
+                            kpi_html = (
+                                '<div style="padding: 1rem; border-radius: 0.7rem; background: #f8f9fa; '
+                                'box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 1rem;">'
+                                '<div style="display: flex; justify-content: space-between; align-items: center;">'
+                                f'<span style="font-size: 1.8rem;">{data["icon"]}</span>'
+                                f'<span style="color: {color}; font-weight: bold; font-size: 1.5rem;">'
+                                f'{data["score"]:.1f}%</span></div>'
+                                f'<h3 style="margin: 0.5rem 0; font-size: 1.1rem; color: #2c3e50;">{metric}</h3>'
+                                '<div style="background: #e9ecef; border-radius: 0.5rem; height: 0.5rem; '
+                                'margin: 0.5rem 0;">'
+                                f'<div style="width: {target_percentage}%; height: 100%; background: {color}; '
+                                'border-radius: 0.5rem;"></div></div>'
+                                '<div style="display: flex; justify-content: space-between; '
+                                'font-size: 0.8rem; color: #495057;">'
+                                f'<span>Target: {data["target"]}%</span>'
+                                f'<span style="color: {color};">{status}</span>'
+                                '</div></div>'
+                            )
+                            
+                            st.markdown(kpi_html, unsafe_allow_html=True)
 
-                        # Overall Score Card
-                        overall_color = "#28a745" if total_score >= 85 else "#ffc107" if total_score >= 70 else "#dc3545"
-                        overall_status = ("Excellent! Your resume is well-optimized." if total_score >= 85 
-                                         else "Good progress, but there's room for improvement." if total_score >= 70 
-                                         else "Your resume needs significant improvements.")
-                        
-                        overall_html = (
-                            '<div style="padding: 1.5rem; border-radius: 0.7rem; background: #f8f9fa; '
-                            'box-shadow: 0 2px 4px rgba(0,0,0,0.1); text-align: center; margin: 1rem 0;">'
-                            f'<h1 style="font-size: 3rem; color: {overall_color}; margin: 0;">'
-                            f'{total_score:.1f}%</h1>'
-                            f'<p style="font-size: 1.2rem; margin: 0.5rem 0; color: #2c3e50;">{overall_status}</p>'
-                            '</div>'
-                        )
-                        
-                        st.markdown("### Overall Resume Score")
-                        st.markdown(overall_html, unsafe_allow_html=True)
+                # ATS Analysis Tab
+                with analysis_tab2:
+                    st.subheader("ATS Compatibility Check")
                     
-                    # ATS Analysis Tab
-                    with analysis_tab2:
-                        st.subheader("ATS Compatibility Check")
-                        
-                        # Create two columns
-                        ats_col1, ats_col2 = st.columns(2)
-                        
-                        with ats_col1:
-                            st.write("### Required Elements")
-                            for factor, passed in ats_factors.items():
-                                if passed:
-                                    st.success(f"✅ {factor.replace('_', ' ').title()}")
-                                else:
-                                    st.error(f"❌ {factor.replace('_', ' ').title()}")
-                        
-                        with ats_col2:
-                            st.write("### Recommendations")
-                            for factor, passed in ats_factors.items():
-                                if not passed:
-                                    st.warning(f"Add {factor.replace('_', ' ').lower()} to improve ATS compatibility")
+                    # Create two columns
+                    ats_col1, ats_col2 = st.columns(2)
                     
-                    # Keyword Analysis Tab
-                    with analysis_tab3:
-                        st.subheader("Industry Keyword Analysis")
-                        
-                        # Create tabs for each industry
-                        industry_tabs = st.tabs([industry.title() for industry in keyword_analysis.keys()])
-                        
-                        for tab, (industry, analysis) in zip(industry_tabs, keyword_analysis.items()):
-                            with tab:
-                                st.write(f"### {industry.title()} Industry Match")
-                                st.progress(analysis['score']/100)
-                                st.write(f"Industry Score: {analysis['score']:.1f}%")
-                                
-                                col1, col2 = st.columns(2)
-                                with col1:
-                                    st.write("#### ✅ Found Keywords")
-                                    for keyword in analysis['found']:
-                                        st.success(keyword)
-                                
-                                with col2:
-                                    st.write("#### ❌ Missing Keywords")
-                                    for keyword in analysis['missing']:
-                                        st.error(keyword)
+                    with ats_col1:
+                        st.write("### Required Elements")
+                        for factor, passed in ats_factors.items():
+                            if passed:
+                                st.success(f"✅ {factor.replace('_', ' ').title()}")
+                            else:
+                                st.error(f"❌ {factor.replace('_', ' ').title()}")
                     
+                    with ats_col2:
+                        st.write("### Recommendations")
+                        for factor, passed in ats_factors.items():
+                            if not passed:
+                                st.warning(f"Add {factor.replace('_', ' ').lower()} to improve ATS compatibility")
+                
+                # Keyword Analysis Tab
+                with analysis_tab3:
+                    st.subheader("Industry Keyword Analysis")
+                    
+                    # Create tabs for each industry
+                    industry_tabs = st.tabs([industry.title() for industry in keyword_analysis.keys()])
+                    
+                    for tab, (industry, analysis) in zip(industry_tabs, keyword_analysis.items()):
+                        with tab:
+                            st.write(f"### {industry.title()} Industry Match")
+                            st.progress(analysis['score']/100)
+                            st.write(f"Industry Score: {analysis['score']:.1f}%")
+                            
+                            col1, col2 = st.columns(2)
+                            with col1:
+                                st.write("#### ✅ Found Keywords")
+                                for keyword in analysis['found']:
+                                    st.success(keyword)
+                            
+                            with col2:
+                                st.write("#### ❌ Missing Keywords")
+                                for keyword in analysis['missing']:
+                                    st.error(keyword)
+                
         # Move Job Description section outside and make it a separate expander
         with st.expander("📋 Job Description Matcher", expanded=True):
             # Initialize job_description in session state if not exists

@@ -6,4 +6,6 @@ PyPDF2
 python-docx
 langchain-community
 faiss-cpu
-sklearn
+scikit-learn
+pyresparser
+spacy
